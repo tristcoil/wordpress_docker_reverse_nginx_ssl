@@ -1,3 +1,81 @@
+version: "2"
+services:
+  nginx-proxy:
+    image: jwilder/nginx-proxy
+    container_name: proxy
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - /etc/nginx/vhost.d
+      - /home/coil/certs:/etc/nginx/certs:ro
+      - /usr/share/nginx/html
+    networks:
+      - proxy_net
+    labels:
+      - com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy
+#-----------------------------------------------------   
+  letsencrypt:
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    container_name: encrypt
+    depends_on:
+      - nginx-proxy
+    volumes:
+      - /home/coil/certs:/etc/nginx/certs:rw
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    volumes_from:
+      - nginx-proxy
+    networks:
+      - proxy_net
+#-----------------------------------------------------   
+  certs:
+    image: tutum/apache-php
+    container_name: certs
+    environment:
+      - VIRTUAL_HOST=data-ops.info,www.data-ops.info,test.data-ops.info,other.data-ops.info
+      - LETSENCRYPT_HOST=data-ops.info,www.data-ops.info,test.data-ops.info,other.data-ops.info
+      - LETSENCRYPT_EMAIL=michal.vasulka@gmail.com
+    networks:
+      - cert_net
+#-----------------------------------------------------   
+  test:
+    image: mikeq/hello-world:latest
+    container_name: test.data-ops
+    depends_on:
+      - nginx-proxy
+      - letsencrypt
+    environment:
+      - VIRTUAL_HOST=test.data-ops.info
+    networks:
+      - proxy_net
+#-----------------------------------------------------   
+#  other:
+#    image: mikeq/hello-world:latest
+#    container_name: other.data-ops
+#    depends_on:
+#      - nginx-proxy
+#      - letsencrypt
+#    environment:
+#      - VIRTUAL_HOST=other.data-ops.info
+#    networks:
+#      - proxy_net
+
+
+  other:
+    image: wordpress
+    container_name: other.data-ops
+    links:
+     - mariadb_other:mysql
+    environment:
+     - WORDPRESS_DB_PASSWORD=password
+     - VIRTUAL_HOST=other.data-ops.info
+    ports:
+     - "3000:80"
+    depends_on:
+      - nginx-proxy
+      - letsencrypt    
+    volumes:
      - ./html_other:/var/www/html
     restart: always 
     networks:
