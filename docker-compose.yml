@@ -1,31 +1,30 @@
-    image: tutum/apache-php
-    container_name: certs
-    environment:
-      - VIRTUAL_HOST=data-ops.info,www.data-ops.info,test.data-ops.info,other.data-ops.info
-      - LETSENCRYPT_HOST=data-ops.info,www.data-ops.info,test.data-ops.info,other.data-ops.info
-      - LETSENCRYPT_EMAIL=michal.vasulka@gmail.com
-    networks:
-      - cert_net
-  test:
-    image: mikeq/hello-world:latest
-    container_name: test.data-ops
-    depends_on:
-      - nginx-proxy
-      - letsencrypt
-    environment:
-      - VIRTUAL_HOST=test.data-ops.info
+     - ./html_other:/var/www/html
+    restart: always 
     networks:
       - proxy_net
-  other:
-    image: mikeq/hello-world:latest
-    container_name: other.data-ops
-    depends_on:
-      - nginx-proxy
-      - letsencrypt
+
+
+
+  mariadb_other:
+    image: mariadb
     environment:
-      - VIRTUAL_HOST=other.data-ops.info
+     - MYSQL_ROOT_PASSWORD=password
+     - MYSQL_DATABASE_1=wordpress_other
+     - VIRTUAL_HOST=other.data-ops.info
+    depends_on:
+     - nginx-proxy
+     - letsencrypt    
+    volumes:
+     - ./database_other:/var/lib/mysql
+    restart: always 
     networks:
       - proxy_net
+
+
+
+
+
+#-----------------------------------------------------  
   default:
     image: mikeq/hello-world:latest
     container_name: www
@@ -36,6 +35,7 @@
       - VIRTUAL_HOST=data-ops.info,www.data-ops.info
     networks:
       - proxy_net
+#----------------------------------------------------- 
 networks:
   cert_net:
     driver: bridge
