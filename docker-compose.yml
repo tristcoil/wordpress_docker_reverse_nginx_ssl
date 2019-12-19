@@ -1,0 +1,43 @@
+    image: tutum/apache-php
+    container_name: certs
+    environment:
+      - VIRTUAL_HOST=data-ops.info,www.data-ops.info,test.data-ops.info,other.data-ops.info
+      - LETSENCRYPT_HOST=data-ops.info,www.data-ops.info,test.data-ops.info,other.data-ops.info
+      - LETSENCRYPT_EMAIL=michal.vasulka@gmail.com
+    networks:
+      - cert_net
+  test:
+    image: mikeq/hello-world:latest
+    container_name: test.data-ops
+    depends_on:
+      - nginx-proxy
+      - letsencrypt
+    environment:
+      - VIRTUAL_HOST=test.data-ops.info
+    networks:
+      - proxy_net
+  other:
+    image: mikeq/hello-world:latest
+    container_name: other.data-ops
+    depends_on:
+      - nginx-proxy
+      - letsencrypt
+    environment:
+      - VIRTUAL_HOST=other.data-ops.info
+    networks:
+      - proxy_net
+  default:
+    image: mikeq/hello-world:latest
+    container_name: www
+    depends_on:
+      - nginx-proxy
+      - letsencrypt
+    environment:
+      - VIRTUAL_HOST=data-ops.info,www.data-ops.info
+    networks:
+      - proxy_net
+networks:
+  cert_net:
+    driver: bridge
+  proxy_net:
+    driver: bridge
