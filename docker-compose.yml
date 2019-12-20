@@ -88,7 +88,7 @@ services:
     environment:
      - MYSQL_ROOT_PASSWORD=password
      - MYSQL_DATABASE_1=wordpress_other
-     - VIRTUAL_HOST=other.data-ops.info
+       #     - VIRTUAL_HOST=other.data-ops.info
     depends_on:
      - nginx-proxy
      - letsencrypt    
@@ -97,7 +97,6 @@ services:
     restart: always 
     networks:
       - proxy_net
-
 
 
 
